@@ -1,3 +1,4 @@
+import { ServiceProvider } from "@/app/constant";
 import { ModalConfigValidator, ModelConfig } from "../store";
 
 import Locale from "../locales";
@@ -10,26 +11,28 @@ export function ModelConfigList(props: {
   updateConfig: (updater: (config: ModelConfig) => void) => void;
 }) {
   const allModels = useAllModels();
+  const value = `${props.modelConfig.model}@${props.modelConfig?.providerName}`;
 
   return (
     <>
       <ListItem title={Locale.Settings.Model}>
         <Select
-          value={props.modelConfig.model}
+          value={value}
           onChange={(e) => {
-            props.updateConfig(
-              (config) =>
-                (config.model = ModalConfigValidator.model(
-                  e.currentTarget.value,
-                )),
-            );
+            const [model, providerName] = e.currentTarget.value.split("@");
+            props.updateConfig((config) => {
+              config.model = ModalConfigValidator.model(model);
+              config.providerName = providerName as ServiceProvider;
+            });
           }}
         >
-          {allModels.map((v, i) => (
-            <option value={v.name} key={i} disabled={!v.available}>
-              {v.name}
-            </option>
-          ))}
+          {allModels
+            .filter((v) => v.available)
+            .map((v, i) => (
+              <option value={`${v.name}@${v.provider?.providerName}`} key={i}>
+                {v.displayName}({v.provider?.providerName})
+              </option>
+            ))}
         </Select>
       </ListItem>
       <ListItem
@@ -89,79 +92,84 @@ export function ModelConfigList(props: {
           }
         ></input>
       </ListItem>
-      <ListItem
-        title={Locale.Settings.PresencePenalty.Title}
-        subTitle={Locale.Settings.PresencePenalty.SubTitle}
-      >
-        <InputRange
-          value={props.modelConfig.presence_penalty?.toFixed(1)}
-          min="-2"
-          max="2"
-          step="0.1"
-          onChange={(e) => {
-            props.updateConfig(
-              (config) =>
-                (config.presence_penalty =
-                  ModalConfigValidator.presence_penalty(
-                    e.currentTarget.valueAsNumber,
-                  )),
-            );
-          }}
-        ></InputRange>
-      </ListItem>
 
-      <ListItem
-        title={Locale.Settings.FrequencyPenalty.Title}
-        subTitle={Locale.Settings.FrequencyPenalty.SubTitle}
-      >
-        <InputRange
-          value={props.modelConfig.frequency_penalty?.toFixed(1)}
-          min="-2"
-          max="2"
-          step="0.1"
-          onChange={(e) => {
-            props.updateConfig(
-              (config) =>
-                (config.frequency_penalty =
-                  ModalConfigValidator.frequency_penalty(
-                    e.currentTarget.valueAsNumber,
-                  )),
-            );
-          }}
-        ></InputRange>
-      </ListItem>
+      {props.modelConfig?.providerName == ServiceProvider.Google ? null : (
+        <>
+          <ListItem
+            title={Locale.Settings.PresencePenalty.Title}
+            subTitle={Locale.Settings.PresencePenalty.SubTitle}
+          >
+            <InputRange
+              value={props.modelConfig.presence_penalty?.toFixed(1)}
+              min="-2"
+              max="2"
+              step="0.1"
+              onChange={(e) => {
+                props.updateConfig(
+                  (config) =>
+                    (config.presence_penalty =
+                      ModalConfigValidator.presence_penalty(
+                        e.currentTarget.valueAsNumber,
+                      )),
+                );
+              }}
+            ></InputRange>
+          </ListItem>
 
-      <ListItem
-        title={Locale.Settings.InjectSystemPrompts.Title}
-        subTitle={Locale.Settings.InjectSystemPrompts.SubTitle}
-      >
-        <input
-          type="checkbox"
-          checked={props.modelConfig.enableInjectSystemPrompts}
-          onChange={(e) =>
-            props.updateConfig(
-              (config) =>
-                (config.enableInjectSystemPrompts = e.currentTarget.checked),
-            )
-          }
-        ></input>
-      </ListItem>
+          <ListItem
+            title={Locale.Settings.FrequencyPenalty.Title}
+            subTitle={Locale.Settings.FrequencyPenalty.SubTitle}
+          >
+            <InputRange
+              value={props.modelConfig.frequency_penalty?.toFixed(1)}
+              min="-2"
+              max="2"
+              step="0.1"
+              onChange={(e) => {
+                props.updateConfig(
+                  (config) =>
+                    (config.frequency_penalty =
+                      ModalConfigValidator.frequency_penalty(
+                        e.currentTarget.valueAsNumber,
+                      )),
+                );
+              }}
+            ></InputRange>
+          </ListItem>
 
-      <ListItem
-        title={Locale.Settings.InputTemplate.Title}
-        subTitle={Locale.Settings.InputTemplate.SubTitle}
-      >
-        <input
-          type="text"
-          value={props.modelConfig.template}
-          onChange={(e) =>
-            props.updateConfig(
-              (config) => (config.template = e.currentTarget.value),
-            )
-          }
-        ></input>
-      </ListItem>
+          <ListItem
+            title={Locale.Settings.InjectSystemPrompts.Title}
+            subTitle={Locale.Settings.InjectSystemPrompts.SubTitle}
+          >
+            <input
+              type="checkbox"
+              checked={props.modelConfig.enableInjectSystemPrompts}
+              onChange={(e) =>
+                props.updateConfig(
+                  (config) =>
+                    (config.enableInjectSystemPrompts =
+                      e.currentTarget.checked),
+                )
+              }
+            ></input>
+          </ListItem>
 
+          <ListItem
+            title={Locale.Settings.InputTemplate.Title}
+            subTitle={Locale.Settings.InputTemplate.SubTitle}
+          >
+            <input
+              type="text"
+              value={props.modelConfig.template}
+              onChange={(e) =>
+                props.updateConfig(
+                  (config) => (config.template = e.currentTarget.value),
+                )
+              }
+            ></input>
+          </ListItem>
+        </>
+      )}
       <ListItem
         title={Locale.Settings.HistoryCount.Title}
         subTitle={Locale.Settings.HistoryCount.SubTitle}
